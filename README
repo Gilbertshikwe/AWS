@@ -1,0 +1,143 @@
+## AWS Study Guide
+
+### What is AWS?
+
+Amazon Web Services (AWS) is a comprehensive and widely adopted cloud platform, offering over 200 fully featured services from data centers globally. AWS is used by millions of customers, including startups, large enterprises, and leading government agencies, to lower costs, become more agile, and innovate faster.
+
+### How to Study AWS as a Beginner
+
+1. **Start with the Basics:**
+   - **AWS Overview:** Understand what AWS is, its services, and its global infrastructure.
+   - **AWS Management Console:** Familiarize yourself with the AWS Management Console and its interface.
+
+2. **Core AWS Services:**
+   - **Compute:** Learn about EC2 (Elastic Compute Cloud), Lambda (Serverless Computing), and Auto Scaling.
+   - **Storage:** Study S3 (Simple Storage Service), EBS (Elastic Block Store), and Glacier.
+   - **Databases:** Understand RDS (Relational Database Service), DynamoDB, and Redshift.
+
+3. **Networking:**
+   - **VPC (Virtual Private Cloud):** Learn about VPC, subnets, route tables, and internet gateways.
+   - **ELB (Elastic Load Balancing):** Study how to distribute incoming traffic across multiple targets.
+
+4. **Security and Identity:**
+   - **IAM (Identity and Access Management):** Understand how to manage user access and encryption keys.
+   - **KMS (Key Management Service):** Learn about managing cryptographic keys.
+
+5. **Monitoring and Management:**
+   - **CloudWatch:** Understand monitoring and management of AWS resources.
+   - **CloudTrail:** Learn about logging and monitoring account activity.
+
+6. **Application Services:**
+   - **SQS (Simple Queue Service):** Study how to decouple and scale microservices, distributed systems, and serverless applications.
+   - **SNS (Simple Notification Service):** Understand how to set up, operate, and send notifications.
+
+7. **Developer Tools:**
+   - **CodeDeploy:** Learn about automated deployment.
+   - **CodePipeline:** Understand the continuous integration and continuous delivery service.
+
+### Suggested Study Path
+
+1. **Official Documentation and Free Resources:**
+   - **AWS Free Tier:** Sign up for AWS Free Tier to get hands-on experience.
+   - **AWS Documentation:** Start with the official AWS documentation for each service.
+   - **AWS Training and Certification:** Take advantage of free digital training.
+
+2. **Online Courses:**
+   - **AWS Certified Solutions Architect – Associate:** Aimed at those looking to design distributed systems.
+   - **AWS Certified Developer – Associate:** For developers who want to develop applications on AWS.
+   - **AWS Certified SysOps Administrator – Associate:** Focuses on deployment, management, and operations on AWS.
+
+3. **Hands-On Practice:**
+   - **Build Projects:** Create small projects to get practical experience.
+   - **AWS Labs:** Use AWS labs to get structured hands-on practice.
+
+4. **Join Communities and Forums:**
+   - **AWS Community:** Engage with the AWS community through forums, Reddit, or LinkedIn groups.
+   - **AWS Events:** Attend AWS events and webinars.
+
+### Topics to Master
+
+1. **Core Concepts:**
+   - Introduction to Cloud Computing
+   - AWS Global Infrastructure
+   - AWS Management Console
+
+2. **Compute Services:**
+   - EC2 (Elastic Compute Cloud)
+   - Lambda
+   - Elastic Beanstalk
+
+3. **Storage Services:**
+   - S3 (Simple Storage Service)
+   - EBS (Elastic Block Store)
+   - Glacier
+
+4. **Database Services:**
+   - RDS (Relational Database Service)
+   - DynamoDB
+   - Redshift
+
+5. **Networking:**
+   - VPC (Virtual Private Cloud)
+   - Route 53
+   - CloudFront
+   - ELB (Elastic Load Balancing)
+
+6. **Security:**
+   - IAM (Identity and Access Management)
+   - KMS (Key Management Service)
+   - AWS Shield
+
+7. **Monitoring and Management:**
+   - CloudWatch
+   - CloudTrail
+   - AWS Config
+
+8. **Developer Tools:**
+   - CodeCommit
+   - CodeBuild
+   - CodeDeploy
+   - CodePipeline
+
+9. **Application Integration:**
+   - SQS (Simple Queue Service)
+   - SNS (Simple Notification Service)
+   - Step Functions
+
+10. **Analytics:**
+    - Athena
+    - EMR (Elastic MapReduce)
+    - Kinesis
+
+11. **Machine Learning:**
+    - SageMaker
+    - Rekognition
+    - Polly
+
+12. **Migration and Transfer:**
+    - AWS Migration Hub
+    - Snowball
+
+13. **Cost Management:**
+    - AWS Cost Explorer
+    - AWS Budgets
+
+By following this structured approach, you'll be able to grasp the fundamental concepts of AWS and progressively move towards more advanced topics.
+
+---
+
+### How to Use This Guide
+
+1. **Get Started:**
+   - Begin with the basics and gradually progress through each section.
+   - Utilize AWS's free tier to gain hands-on experience.
+
+2. **Study Resources:**
+   - Refer to AWS's official documentation and free training materials.
+   - Enroll in online courses for structured learning.
+
+3. **Practice:**
+   - Engage in hands-on projects and labs.
+   - Join AWS communities for support and networking.
+
+By adhering to the suggested study path and mastering the listed topics, you will build a strong foundation in AWS, preparing you for various AWS certifications and real-world applications.
