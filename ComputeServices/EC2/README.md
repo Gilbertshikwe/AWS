@@ -229,249 +229,632 @@ This README with real-life examples should help you better understand how Amazon
 
 You can explore further by experimenting with launching instances, configuring security groups, and using CloudWatch for monitoring.
 
-Here's a step-by-step guide for deploying a React and Flask application on an AWS EC2 instance, followed by a detailed `README.md` that you can include in your project.
 
-### **Step-by-Step Guide**
+# Deploying a Flask Application on Amazon EC2 with Amazon RDS
 
-#### **1. Prepare Your Application Locally**
-Before deploying, ensure you have the following:
-- A **React** frontend application (usually in a folder named `frontend`).
-- A **Flask** backend application (usually in a folder named `backend`).
+This guide provides step-by-step instructions for deploying a Flask application on an Amazon EC2 instance, connecting it to an Amazon RDS MySQL database, and configuring Nginx to serve the application.
 
-#### **2. Set Up an EC2 Instance**
-1. **Launch an EC2 Instance**:
-   - Sign in to your AWS Management Console, go to the EC2 dashboard, and click "Launch Instance."
-   - Choose the **Ubuntu Server 22.04 LTS** AMI.
-   - Select an instance type (e.g., **t2.micro** for the free tier).
-   - Configure instance details, storage, and tags as needed.
-   - Set up a **Security Group**:
-     - Allow **SSH** (port 22) for remote access.
-     - Allow **HTTP** (port 80) for web traffic.
-   - Launch the instance and download the `.pem` key file.
+## Prerequisites
 
-2. **Access Your EC2 Instance**:
-   - Use SSH to connect to your instance:
-     ```bash
-     ssh -i /path/to/your-key.pem ubuntu@your-ec2-public-ip
-     ```
+- **AWS Account**: Sign up for an AWS account if you don’t have one.
+- **Basic Knowledge**: Familiarity with Flask, MySQL, and command-line operations.
+- **Flask Application**: Ensure you have a Flask application ready (e.g., `app.py`).
 
-#### **3. Set Up the Environment on EC2**
-1. **Update and Install Dependencies**:
-   - Run the following commands to update your server and install necessary packages:
-     ```bash
-     sudo apt update && sudo apt upgrade -y
-     sudo apt install python3-pip python3-dev nginx curl git -y
-     curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-     sudo apt install -y nodejs
-     ```
+## Steps
 
-#### **4. Deploy the Flask Backend**
-1. **Transfer or Clone Your Flask App**:
-   - Use `scp` to transfer your Flask backend code to the EC2 instance, or clone it directly:
-     ```bash
-     git clone https://github.com/yourusername/your-flask-repo.git
-     cd your-flask-repo
-     ```
+### Step 1: Set Up an RDS MySQL Database
 
-2. **Set Up a Python Virtual Environment**:
+1. **Sign in** to the [AWS Management Console](https://aws.amazon.com/console/).
+2. **Navigate** to the RDS Dashboard.
+3. **Create a New Database**:
+   - Click **Create database**.
+   - Choose **MySQL** as the database engine.
+   - Select **Free tier** if eligible.
+   - **Configure Database Settings**:
+     - **DB Instance Identifier**: `flaskapp-db`
+     - **Master Username**: `flaskuser`
+     - **Master Password**: `flaskpassword`
+   - **Connectivity**:
+     - Ensure the instance is in the same VPC as your EC2 instance.
+     - Enable **Public accessibility** to connect from your EC2 instance.
+   - Click **Create database**.
+   - **Note down the RDS endpoint**; you'll need this to connect your Flask app.
+
+### Step 2: Launch an EC2 Instance
+
+1. **Navigate** to the [EC2 Dashboard](https://aws.amazon.com/ec2/).
+2. **Launch an Instance**:
+   - Click **Launch Instance**.
+   - **Choose an AMI**: Select **Ubuntu Server** or your preferred Linux distribution.
+   - **Choose an Instance Type**: `t2.micro` is suitable for the free tier.
+   - **Configure Instance Details**:
+     - Ensure the instance is in the same VPC as your RDS instance.
+   - **Add Storage**: The default 8 GB is sufficient.
+   - **Configure Security Group**:
+     - Allow **HTTP (port 80)** and **SSH (port 22)**.
+     - Add a rule to allow **MySQL/Aurora (port 3306)** from your RDS instance’s security group.
+   - Click **Review and Launch** and then **Launch** the instance.
+   - **Download the key pair** to connect via SSH.
+
+### Step 3: SSH into the EC2 Instance
+
+1. **Connect** to your EC2 instance using SSH:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
+   ssh -i /path/to/your-key.pem ubuntu@your-ec2-public-ip
    ```
 
-3. **Install Flask and Dependencies**:
+### Prerequisites
+
+1. **Python**: Ensure you have Python installed on your system.
+2. **MySQL**: Install and set up MySQL.
+3. **Pip**: Install `pip`, Python's package manager, to install the necessary Python packages.
+
+### Step 1: Set Up a Virtual Environment
+
+First, let's create a virtual environment for your project to keep dependencies isolated.
+
+```bash
+mkdir flask_mysql_app
+cd flask_mysql_app
+python3 -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+```
+
+### Step 2: Install Required Packages
+
+Install Flask and the necessary MySQL connector libraries.
+
+```bash
+pip install Flask Flask-MySQLdb
+```
+
+### Step 3: Set Up the MySQL Database
+
+Log in to your MySQL server and create a database.
+
+```sql
+CREATE DATABASE flask_app_db;
+CREATE USER 'flaskuser'@'localhost' IDENTIFIED BY 'flaskpassword';
+GRANT ALL PRIVILEGES ON flask_app_db.* TO 'flaskuser'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### Step 4: Create the Flask App
+
+Create a file named `app.py` and add the following code:
+
+```python
+from flask import Flask, render_template, request, redirect
+from flask_mysqldb import MySQL
+import MySQLdb.cursors
+
+app = Flask(__name__)
+
+# Configure MySQL
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'flaskuser'
+app.config['MYSQL_PASSWORD'] = 'flaskpassword'
+app.config['MYSQL_DB'] = 'flask_app_db'
+
+# Initialize MySQL
+mysql = MySQL(app)
+
+@app.route('/')
+def index():
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT * FROM users")
+    users = cur.fetchall()
+    return render_template('index.html', users=users)
+
+@app.route('/add', methods=['POST'])
+def add_user():
+    name = request.form['name']
+    cur = mysql.connection.cursor()
+    cur.execute("INSERT INTO users(name) VALUES (%s)", [name])
+    mysql.connection.commit()
+    return redirect('/')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+### Step 5: Create a Database Table
+
+Before running the app, create a `users` table in your MySQL database.
+
+```sql
+USE flask_app_db;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
+);
+```
+
+### Step 6: Create a Template
+
+Create a `templates` directory and add a file named `index.html` inside it:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User List</title>
+</head>
+<body>
+    <h1>Users</h1>
+    <form method="POST" action="/add">
+        <input type="text" name="name" placeholder="Enter a name">
+        <button type="submit">Add User</button>
+    </form>
+    <ul>
+        {% for user in users %}
+            <li>{{ user.name }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+```
+
+### Step 7: Run the Flask App
+
+Finally, run your Flask app:
+
+```bash
+python app.py
+```
+
+Visit `http://127.0.0.1:5000/` in your browser. You should see a form to add users and a list of users from the database.
+
+### Step 8: Set Up the Environment on EC2
+
+If you're deploying on an EC2 instance, follow these additional steps:
+
+1. **Update the Instance** and install necessary packages:
    ```bash
+   sudo apt-get update
+   sudo apt-get install python3-pip python3-dev libmysqlclient-dev nginx git
+   ```
+
+2. **Install and Set Up `virtualenv`**:
+   ```bash
+   pip3 install virtualenv
+   ```
+
+3. **Clone or Transfer Your Flask Application**:
+   ```bash
+   git clone https://github.com/your-repo/flask_mysql_app.git
+   cd flask_mysql_app
+   ```
+
+4. **Set Up a Virtual Environment** and install dependencies:
+   ```bash
+   virtualenv venv
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 
-4. **Test Flask Locally on the EC2 Instance**:
-   - Run the Flask app to make sure it works:
+5. **Update `app.py`** to connect to the RDS database:
+   ```python
+   from flask import Flask, render_template, request, redirect
+   from flask_mysqldb import MySQL
+   import MySQLdb.cursors
+
+   app = Flask(__name__)
+
+   # Configure MySQL
+   app.config['MYSQL_HOST'] = '<your-rds-endpoint>'
+   app.config['MYSQL_USER'] = 'flaskuser'
+   app.config['MYSQL_PASSWORD'] = 'flaskpassword'
+   app.config['MYSQL_DB'] = 'flask_app_db'
+
+   # Initialize MySQL
+   mysql = MySQL(app)
+
+   @app.route('/')
+   def index():
+       cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+       cur.execute("SELECT * FROM users")
+       users = cur.fetchall()
+       return render_template('index.html', users=users)
+
+   @app.route('/add', methods=['POST'])
+   def add_user():
+       name = request.form['name']
+       cur = mysql.connection.cursor()
+       cur.execute("INSERT INTO users(name) VALUES (%s)", [name])
+       mysql.connection.commit()
+       return redirect('/')
+
+   if __name__ == '__main__':
+       app.run(debug=True)
+   ```
+
+6. **Run the Flask App** to test:
+   ```bash
+   python app.py
+   ```
+
+### Step 6: Create and Configure the MySQL Database Table
+
+1. **Log in** to your MySQL database:
+   ```bash
+   mysql -h <your-rds-endpoint> -u flaskuser -p
+   ```
+2. **Create the Database Table**:
+   ```sql
+   USE flask_app_db;
+
+   CREATE TABLE users (
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       name VARCHAR(100) NOT NULL
+   );
+   ```
+
+### Summary
+
+You've successfully deployed a Flask application on an EC2 instance with an RDS MySQL database. The app should be accessible via the public IP of your EC2 instance and will interact with the RDS database to store and retrieve user data.
+
+## Prerequisites for Cloning and Setting Up the Flask Backend
+
+Before cloning the repository and setting up your Flask backend, make sure you have your SSH key properly configured on your Ubuntu machine. Follow these steps to ensure that your SSH key is set up and added to your GitHub account.
+
+### 1. Check Existing SSH Key
+
+Verify that you have an SSH key pair by running:
+
+```bash
+ls -al ~/.ssh
+```
+
+You should see files like `id_ed25519` and `id_ed25519.pub`. If these files are not present, you need to generate a new SSH key.
+
+### 2. Generate a New SSH Key (If Needed)
+
+If you don’t have an SSH key pair, generate one using:
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+Follow the prompts to save the key (default location is `~/.ssh/id_ed25519`) and optionally set a passphrase.
+
+### 3. Add Your SSH Key to the SSH Agent
+
+Start the SSH agent and add your SSH key:
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+```
+
+### 4. Add Your SSH Key to GitHub
+
+1. **Copy Your Public Key:**
+
+   ```bash
+   cat ~/.ssh/id_ed25519.pub
+   ```
+
+   Copy the output of this command.
+
+2. **Add the Key to GitHub:**
+
+   - Go to [GitHub SSH and GPG keys settings](https://github.com/settings/keys).
+   - Click on "New SSH key."
+   - Paste your public key into the "Key" field and provide a title.
+   - Click "Add SSH key."
+
+### 5. Test Your SSH Connection
+
+Ensure that your SSH connection to GitHub is working:
+
+```bash
+ssh -T git@github.com
+```
+
+You should see a message like:
+
+```
+Hi `username`! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+## Other Options 
+### Option 1: Using a Personal Access Token (PAT)
+
+1. **Generate a Personal Access Token**
+
+   - Go to [GitHub Settings](https://github.com/settings/tokens).
+   - Click on **"Generate new token"**.
+   - Provide a name for the token, set expiration, and select the scopes (permissions) you need. For basic operations, you can select `repo`.
+   - Click **"Generate token"**.
+   - Copy the token. You won’t be able to see it again after you navigate away.
+
+2. **Use the Personal Access Token**
+
+   When prompted for a password during the `git clone` command, use the personal access token instead of your GitHub password.
+
+   ```bash
+   git clone https://github.com/Gilbertshikwe/EC2-flask-backend.git
+   ```
+
+   Enter your GitHub username and use the personal access token as the password.
+
+### Option 2: Using SSH Keys
+
+1. **Generate SSH Keys (if you don’t have one)**
+
+   Generate a new SSH key pair if you don't already have one:
+
+   ```bash
+   ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+   ```
+
+   Press Enter to accept the default file location and optionally provide a passphrase.
+
+2. **Add Your SSH Key to GitHub**
+
+   - Copy your SSH public key to your clipboard:
+
      ```bash
-     flask run --host=0.0.0.0
+     cat ~/.ssh/id_rsa.pub
      ```
 
-5. **Set Up Gunicorn**:
-   - Install Gunicorn and test it:
-     ```bash
-     pip install gunicorn
-     gunicorn --bind 0.0.0.0:5000 wsgi:app
-     ```
+     Copy the output of this command.
 
-#### **5. Deploy the React Frontend**
-1. **Transfer or Clone Your React App**:
-   - Transfer or clone the React frontend code to the EC2 instance.
+   - Go to [GitHub SSH and GPG keys settings](https://github.com/settings/keys).
+   - Click on **"New SSH key"**.
+   - Paste your key into the "Key" field and give it a title.
+   - Click **"Add SSH key"**.
 
-2. **Build the React App**:
-   - Navigate to the React directory and build the app:
-     ```bash
-     cd your-react-repo
-     npm install
-     npm run build
-     ```
+3. **Clone the Repository Using SSH**
 
-3. **Serve React with Nginx**:
-   - Configure Nginx to serve your React app and proxy requests to the Flask backend:
-     ```bash
-     sudo vim /etc/nginx/sites-available/default
-     ```
-   - Replace the contents with:
-     ```nginx
-     server {
-         listen 80;
-         server_name your_domain_or_ip;
+   Change the URL to use SSH:
 
-         location / {
-             root /home/ubuntu/your-react-repo/build;
-             try_files $uri /index.html;
-         }
+   ```bash
+   git clone git@github.com:Gilbertshikwe/EC2-flask-backend.git
+   ```
 
-         location /api/ {
-             proxy_pass http://127.0.0.1:5000;
-             proxy_set_header Host $host;
-             proxy_set_header X-Real-IP $remote_addr;
-             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-             proxy_set_header X-Forwarded-Proto $scheme;
-         }
-     }
-     ```
+   This should not require a password if your SSH key is correctly set up.
+
+### Summary
+
+- **Personal Access Token**: Use a PAT as the password for HTTPS operations.
+- **SSH Keys**: Configure SSH keys and use the SSH URL for cloning.
+
+Both methods provide secure ways to authenticate with GitHub, so choose the one that best fits your workflow.
+
+# Deploying Flask Application with uWSGI on EC2
+
+This guide outlines the steps for deploying a Flask application using uWSGI instead of Gunicorn on an Amazon EC2 instance. It also covers how to set up Nginx as a reverse proxy.
+
+## Prerequisites
+
+- An Amazon EC2 instance running Ubuntu.
+- A Flask application ready for deployment.
+- Basic knowledge of AWS, Linux, and command-line operations.
+
+## Setup Instructions
+
+### Step 1: Create the WSGI Entry Point
+
+1. **SSH into your EC2 instance**:
+
+   ```bash
+   ssh -i /path/to/your-key.pem ubuntu@your-ec2-public-ip
+   ```
+
+2. **Navigate to your project directory**:
+
+   ```bash
+   cd /home/ubuntu/EC2_Flask
+   ```
+
+3. **Create the WSGI entry point**:
+
+   Create a file named `wsgi.py` in your project directory:
+
+   ```bash
+   nano ~/EC2_Flask/wsgi.py
+   ```
+
+   Add the following content to `wsgi.py`:
+
+   ```python
+   from app import app
+
+   if __name__ == "__main__":
+       app.run()
+   ```
+
+   Save and close the file.
+
+### Step 2: Install and Configure uWSGI
+
+1. **Install uWSGI**:
+
+   Make sure you are in your virtual environment and install uWSGI:
+
+   ```bash
+   source venv/bin/activate
+   pip install uwsgi
+   ```
+
+2. **Test uWSGI**:
+
+   Test that uWSGI can serve your application by running:
+
+   ```bash
+   uwsgi --socket 0.0.0.0:5000 --protocol=http -w wsgi:app
+   ```
+
+   Visit `http://your_server_ip:5000` in your web browser to check if your application is running. Press `CTRL + C` to stop uWSGI.
+
+3. **Create a uWSGI configuration file**:
+
+   Create a file named `myproject.ini` in your project directory:
+
+   ```bash
+   nano ~/EC2_Flask/myproject.ini
+   ```
+
+   Add the following content to `myproject.ini`:
+
+   ```ini
+   [uwsgi]
+   module = wsgi:app
+
+   master = true
+   processes = 5
+
+   socket = /home/ubuntu/EC2_Flask/myproject.sock
+   chmod-socket = 660
+   vacuum = true
+
+   die-on-term = true
+   ```
+
+   Save and close the file.
+
+### Step 3: Create a systemd Unit File
+
+1. **Create a systemd service file**:
+
+   Create a file named `myproject.service` in `/etc/systemd/system/`:
+
+   ```bash
+   sudo nano /etc/systemd/system/myproject.service
+   ```
+
+   Add the following content to `myproject.service`:
+
+   ```ini
+   [Unit]
+   Description=uWSGI instance to serve myproject
+   After=network.target
+
+   [Service]
+   User=ubuntu
+   Group=www-data
+   WorkingDirectory=/home/ubuntu/EC2_Flask
+   Environment="PATH=/home/ubuntu/EC2_Flask/venv/bin"
+   ExecStart=/home/ubuntu/EC2_Flask/venv/bin/uwsgi --ini myproject.ini
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   Save and close the file.
+
+2. **Start and enable the uWSGI service**:
+
+   ```bash
+   sudo systemctl start myproject
+   sudo systemctl enable myproject
+   ```
+
+   Check the status of the service:
+
+   ```bash
+   sudo systemctl status myproject
+   ```
+
+### Step 4: Configure Nginx
+
+1. **Create an Nginx configuration file**:
+
+   Create a file named `myproject` in `/etc/nginx/sites-available/`:
+
+   ```bash
+   sudo nano /etc/nginx/sites-available/myproject
+   ```
+
+   Add the following content to `myproject`:
+
+   ```nginx
+   server {
+       listen 80;
+       server_name your_domain www.your_domain;
+
+       location / {
+           include uwsgi_params;
+           uwsgi_pass unix:/home/ubuntu/EC2_Flask/myproject.sock;
+       }
+   }
+   ```
+
+   Save and close the file.
+
+2. **Enable the Nginx configuration**:
+
+   Link the file to the `sites-enabled` directory:
+
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/myproject /etc/nginx/sites-enabled
+   ```
+
+3. **Test the Nginx configuration**:
+
+   ```bash
+   sudo nginx -t
+   ```
 
 4. **Restart Nginx**:
+
    ```bash
    sudo systemctl restart nginx
    ```
 
-#### **6. Run and Test Your Application**
-1. **Start the Flask Application with Gunicorn**:
-   - Keep your Flask app running with Gunicorn:
-     ```bash
-     gunicorn --workers 3 --bind 0.0.0.0:5000 wsgi:app
-     ```
+5. **Adjust the firewall rules**:
 
-2. **Test Your Application**:
-   - Visit your EC2 instance's public IP in a browser. The React frontend should load, and API requests should be proxied to the Flask backend.
+   Remove the rule allowing port 5000 and allow Nginx:
 
-#### **7. Secure Your Application (Optional)**
-- **Install SSL/TLS** using Let's Encrypt:
-  ```bash
-  sudo apt install certbot python3-certbot-nginx -y
-  sudo certbot --nginx -d your_domain
-  ```
+   ```bash
+   sudo ufw delete allow 5000
+   sudo ufw allow 'Nginx Full'
+   ```
 
-### **README.md Example**
+### Step 5: Verify Your Setup
 
-# React-Flask Application Deployment on AWS EC2
+Visit `http://your_domain` in your web browser. You should see your Flask application running.
 
-This repository contains a simple React frontend and Flask backend application. This guide will help you deploy both applications on an AWS EC2 instance.
+## Troubleshooting
 
-## Prerequisites
-Before deploying, ensure you have the following:
-- An AWS account.
-- Basic knowledge of SSH and terminal commands.
-- A React frontend and Flask backend application ready to deploy.
+- **uWSGI Service Issues**: Check the logs in `/var/log/syslog` or use `journalctl -u myproject`.
+- **Nginx Issues**: Check Nginx logs in `/var/log/nginx/`.
 
-## Deployment Steps
+---
 
-### 1. Set Up an EC2 Instance
-1. Log in to your AWS Management Console and navigate to the EC2 dashboard.
-2. Launch a new EC2 instance using the **Ubuntu Server 22.04 LTS** AMI.
-3. Configure your instance:
-   - **Instance Type**: Select `t2.micro` for the free tier.
-   - **Security Group**: Allow SSH (port 22) and HTTP (port 80).
-4. Download the `.pem` key file to access your instance via SSH.
+This README provides a comprehensive guide for setting up your Flask application with uWSGI and Nginx on an EC2 instance. Adjust paths and usernames as needed for your specific setup.
 
-### 2. Connect to Your EC2 Instance
-Use SSH to connect to your EC2 instance:
-```bash
-ssh -i /path/to/your-key.pem ubuntu@your-ec2-public-ip
-```
+### 8. (Optional) Secure with SSL/TLS
 
-### 3. Set Up the Environment on EC2
-1. Update your instance and install necessary packages:
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install python3-pip python3-dev nginx curl git -y
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-sudo apt install -y nodejs
-```
-
-### 4. Deploy the Flask Backend
-1. Clone your Flask repository:
-```bash
-git clone https://github.com/yourusername/your-flask-repo.git
-cd your-flask-repo
-```
-2. Set up a Python virtual environment:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-4. Test the Flask app locally:
-```bash
-flask run --host=0.0.0.0
-```
-5. Set up Gunicorn:
-```bash
-pip install gunicorn
-gunicorn --bind 0.0.0.0:5000 wsgi:app
-```
-
-### 5. Deploy the React Frontend
-1. Clone your React repository:
-```bash
-git clone https://github.com/yourusername/your-react-repo.git
-cd your-react-repo
-```
-2. Build the React app:
-```bash
-npm install
-npm run build
-```
-3. Configure Nginx:
-```bash
-sudo vim /etc/nginx/sites-available/default
-```
-Replace with:
-```nginx
-server {
-    listen 80;
-    server_name your_domain_or_ip;
-
-    location / {
-        root /home/ubuntu/your-react-repo/build;
-        try_files $uri /index.html;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-4. Restart Nginx:
-```bash
-sudo systemctl restart nginx
-```
-
-### 6. Running the Application
-1. Start the Flask app with Gunicorn:
-```bash
-gunicorn --workers 3 --bind 0.0.0.0:5000 wsgi:app
-```
-2. Access your application via the EC2 public IP.
-
-### 7. (Optional) Secure with SSL/TLS
-If you have a domain, secure your application with Let's Encrypt:
+#### 8.1 Install Certbot and Obtain SSL Certificate
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
 sudo certbot --nginx -d your_domain
 ```
+### 9. Deleting the EC2 Instance After Use
+
+Once you are done with your project or testing, it's important to terminate the EC2 instance to avoid unnecessary charges. 
+
+1. **Navigate to the EC2 Dashboard:**
+   - Go to the EC2 dashboard in the AWS Management Console.
+
+2. **Select the Instance:**
+   - In the **"Instances"** section, locate the instance you want to terminate.
+   - Check the box next to the instance ID.
+
+3. **Terminate the Instance:**
+   - Click on the **"Instance State"** dropdown menu.
+   - Select **"Terminate Instance"** from the options.
+
+4. **Confirm Termination:**
+   - Confirm the action when prompted. The instance will be terminated, and all associated resources will be released.
+
+By terminating the instance, you prevent any further billing for that instance, helping manage costs effectively.
 
 ## Conclusion
 You have successfully deployed a React and Flask application on an AWS EC2 instance! This setup allows your React frontend to interact with your Flask backend through API requests, all served from a single server instance.
