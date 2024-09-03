@@ -422,6 +422,69 @@ If you're deploying on an EC2 instance, follow these additional steps:
    ```bash
    pip3 install virtualenv
    ```
+## Prerequisites for Cloning the Flask Backend
+
+Before cloning the repository and setting up your Flask backend, make sure you have your SSH key properly configured on your Ubuntu machine. Follow these steps to ensure that your SSH key is set up and added to your GitHub account.
+
+### 1. Check Existing SSH Key
+
+Verify that you have an SSH key pair by running:
+
+```bash
+ls -al ~/.ssh
+```
+
+You should see files like `id_ed25519` and `id_ed25519.pub`. If these files are not present, you need to generate a new SSH key.
+
+### 2. Generate a New SSH Key (If Needed)
+
+If you don’t have an SSH key pair, generate one using:
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+Follow the prompts to save the key (default location is `~/.ssh/id_ed25519`) and optionally set a passphrase.
+
+### 3. Add Your SSH Key to the SSH Agent
+
+Start the SSH agent and add your SSH key:
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+```
+
+### 4. Add Your SSH Key to GitHub
+
+1. **Copy Your Public Key:**
+
+   ```bash
+   cat ~/.ssh/id_ed25519.pub
+   ```
+
+   Copy the output of this command.
+
+2. **Add the Key to GitHub:**
+
+   - Go to [GitHub SSH and GPG keys settings](https://github.com/settings/keys).
+   - Click on "New SSH key."
+   - Paste your public key into the "Key" field and provide a title.
+   - Click "Add SSH key."
+
+### 5. Test Your SSH Connection
+
+Ensure that your SSH connection to GitHub is working:
+
+```bash
+ssh -T git@github.com
+```
+
+You should see a message like:
+
+```
+Hi `username`! You've successfully authenticated, but GitHub does not provide shell access.
+```
 
 3. **Clone or Transfer Your Flask Application**:
    ```bash
@@ -492,139 +555,6 @@ If you're deploying on an EC2 instance, follow these additional steps:
        name VARCHAR(100) NOT NULL
    );
    ```
-
-### Summary
-
-You've successfully deployed a Flask application on an EC2 instance with an RDS MySQL database. The app should be accessible via the public IP of your EC2 instance and will interact with the RDS database to store and retrieve user data.
-
-## Prerequisites for Cloning and Setting Up the Flask Backend
-
-Before cloning the repository and setting up your Flask backend, make sure you have your SSH key properly configured on your Ubuntu machine. Follow these steps to ensure that your SSH key is set up and added to your GitHub account.
-
-### 1. Check Existing SSH Key
-
-Verify that you have an SSH key pair by running:
-
-```bash
-ls -al ~/.ssh
-```
-
-You should see files like `id_ed25519` and `id_ed25519.pub`. If these files are not present, you need to generate a new SSH key.
-
-### 2. Generate a New SSH Key (If Needed)
-
-If you don’t have an SSH key pair, generate one using:
-
-```bash
-ssh-keygen -t ed25519 -C "your_email@example.com"
-```
-
-Follow the prompts to save the key (default location is `~/.ssh/id_ed25519`) and optionally set a passphrase.
-
-### 3. Add Your SSH Key to the SSH Agent
-
-Start the SSH agent and add your SSH key:
-
-```bash
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519
-```
-
-### 4. Add Your SSH Key to GitHub
-
-1. **Copy Your Public Key:**
-
-   ```bash
-   cat ~/.ssh/id_ed25519.pub
-   ```
-
-   Copy the output of this command.
-
-2. **Add the Key to GitHub:**
-
-   - Go to [GitHub SSH and GPG keys settings](https://github.com/settings/keys).
-   - Click on "New SSH key."
-   - Paste your public key into the "Key" field and provide a title.
-   - Click "Add SSH key."
-
-### 5. Test Your SSH Connection
-
-Ensure that your SSH connection to GitHub is working:
-
-```bash
-ssh -T git@github.com
-```
-
-You should see a message like:
-
-```
-Hi `username`! You've successfully authenticated, but GitHub does not provide shell access.
-```
-
-## Other Options 
-### Option 1: Using a Personal Access Token (PAT)
-
-1. **Generate a Personal Access Token**
-
-   - Go to [GitHub Settings](https://github.com/settings/tokens).
-   - Click on **"Generate new token"**.
-   - Provide a name for the token, set expiration, and select the scopes (permissions) you need. For basic operations, you can select `repo`.
-   - Click **"Generate token"**.
-   - Copy the token. You won’t be able to see it again after you navigate away.
-
-2. **Use the Personal Access Token**
-
-   When prompted for a password during the `git clone` command, use the personal access token instead of your GitHub password.
-
-   ```bash
-   git clone https://github.com/Gilbertshikwe/EC2-flask-backend.git
-   ```
-
-   Enter your GitHub username and use the personal access token as the password.
-
-### Option 2: Using SSH Keys
-
-1. **Generate SSH Keys (if you don’t have one)**
-
-   Generate a new SSH key pair if you don't already have one:
-
-   ```bash
-   ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-   ```
-
-   Press Enter to accept the default file location and optionally provide a passphrase.
-
-2. **Add Your SSH Key to GitHub**
-
-   - Copy your SSH public key to your clipboard:
-
-     ```bash
-     cat ~/.ssh/id_rsa.pub
-     ```
-
-     Copy the output of this command.
-
-   - Go to [GitHub SSH and GPG keys settings](https://github.com/settings/keys).
-   - Click on **"New SSH key"**.
-   - Paste your key into the "Key" field and give it a title.
-   - Click **"Add SSH key"**.
-
-3. **Clone the Repository Using SSH**
-
-   Change the URL to use SSH:
-
-   ```bash
-   git clone git@github.com:Gilbertshikwe/EC2-flask-backend.git
-   ```
-
-   This should not require a password if your SSH key is correctly set up.
-
-### Summary
-
-- **Personal Access Token**: Use a PAT as the password for HTTPS operations.
-- **SSH Keys**: Configure SSH keys and use the SSH URL for cloning.
-
-Both methods provide secure ways to authenticate with GitHub, so choose the one that best fits your workflow.
 
 # Deploying Flask Application with uWSGI on EC2
 
@@ -836,7 +766,197 @@ This README provides a comprehensive guide for setting up your Flask application
 sudo apt install certbot python3-certbot-nginx -y
 sudo certbot --nginx -d your_domain
 ```
-### 9. Deleting the EC2 Instance After Use
+
+## **Deploying a Simple React App on AWS EC2**
+
+This guide provides a step-by-step process for setting up a basic React app and deploying it to an EC2 instance on Amazon Web Services (AWS). The app will be served using Nginx.
+
+### **1. Set Up Your React App Locally**
+
+1. **Install Node.js and npm**
+
+   Ensure Node.js and npm (Node Package Manager) are installed on your local machine. You can download them from the [Node.js official website](https://nodejs.org/).
+
+   Verify the installation by running the following commands in your terminal:
+
+   ```bash
+   node -v
+   npm -v
+   ```
+
+2. **Create a New React App**
+
+   Use `create-react-app` to generate a basic React application:
+
+   ```bash
+   npx create-react-app my-react-app
+   cd my-react-app
+   ```
+
+3. **Test Your React App Locally**
+
+   Start the development server to ensure everything is working:
+
+   ```bash
+   npm start
+   ```
+
+   Your app should be running at `http://localhost:3000`.
+
+4. **Build the React App for Production**
+
+   Once you're satisfied with the app, build it for production:
+
+   ```bash
+   npm run build
+   ```
+
+   This command creates a `build` directory containing a static version of your app.
+
+### **2. Launch an EC2 Instance**
+
+1. **Login to AWS Management Console**
+
+   Go to the [AWS Management Console](https://aws.amazon.com/console/) and log in.
+
+2. **Launch an EC2 Instance**
+
+   - Navigate to the **EC2 Dashboard** and click on **Launch Instance**.
+   - Choose an Amazon Machine Image (AMI): Select **Ubuntu Server 20.04 LTS**.
+   - Choose an instance type: **t2.micro** is sufficient for a small app and is eligible for the free tier.
+   - Configure the instance details (default settings are usually fine).
+   - Add storage (use the default 8 GB).
+   - Add Tags (Optional but helpful for identification).
+   - Configure the Security Group:
+     - Allow **HTTP (port 80)** from anywhere (0.0.0.0/0).
+     - Allow **SSH (port 22)** from your IP (or anywhere for broader access, though less secure).
+   - Review and **Launch** the instance.
+   - Create a new key pair or use an existing one. Download the key pair file (`.pem`).
+
+3. **Connect to the EC2 Instance**
+
+   - Open your terminal and navigate to the directory where your `.pem` file is located.
+   - Change the permission of your key file:
+
+     ```bash
+     chmod 400 your-key-file.pem
+     ```
+
+   - Connect to your instance using SSH:
+
+     ```bash
+     ssh -i "your-key-file.pem" ubuntu@your-ec2-public-ip
+     ```
+
+### **3. Set Up the EC2 Instance**
+
+1. **Update and Install Dependencies**
+
+   On your EC2 instance, run the following commands to update the package list and install necessary dependencies:
+
+   ```bash
+   sudo apt update
+   sudo apt install nginx
+   sudo apt install nodejs npm
+   ```
+
+2. **Clone the React App to EC2**
+
+   - Install Git if it's not already installed:
+
+     ```bash
+     sudo apt install git
+     ```
+
+   - Clone your React app from a repository or upload it using `scp`:
+
+     ```bash
+     git clone https://github.com/your-username/your-react-app.git
+     cd your-react-app
+     ```
+
+   - Alternatively, you can use `scp` to copy your build files directly:
+
+     ```bash
+     scp -i your-key-file.pem -r ./build ubuntu@your-ec2-public-ip:/home/ubuntu/
+     ```
+
+3. **Serve the React App Using Nginx**
+
+   - **Move the build files to the `/var/www/html` directory**:
+
+     ```bash
+     sudo rm -rf /var/www/html/*
+     sudo cp -r ~/ec2-react/build/* /var/www/html/
+     ```
+
+     - **Command Explanation**:
+       - `sudo rm -rf /var/www/html/*`: This command deletes all existing files and directories in the `/var/www/html` directory. The `-r` option allows the removal of directories and their contents recursively, and `-f` forces the deletion without prompting for confirmation.
+       - `sudo cp -r ~/ec2-react/build/* /var/www/html/`: This command copies all the files from the `build` directory of your React app to the `/var/www/html` directory. The `-r` option is used to copy directories and their contents recursively.
+
+   - **Restart Nginx** to apply the changes:
+
+     ```bash
+     sudo systemctl restart nginx
+     ```
+
+4. **Configure Nginx (Optional)**
+
+   If you need to customize the Nginx configuration, edit the default configuration file:
+
+   ```bash
+   sudo nano /etc/nginx/sites-available/default
+   ```
+
+   After making changes, restart Nginx to apply them.
+
+5. **Open Your React App in a Browser**
+
+   Navigate to your EC2 instance's public IP address in your web browser:
+
+   ```bash
+   http://your-ec2-public-ip
+   ```
+
+   Your React app should now be live!
+
+### **4. Security Configurations**
+
+1. **Security Groups**
+
+   Ensure your security group has the necessary rules:
+   - **SSH (Port 22):** Access limited to your IP.
+   - **HTTP (Port 80):** Open to all (0.0.0.0/0) for public access.
+
+2. **Keep Your Instance Updated**
+
+   Regularly update your EC2 instance to patch security vulnerabilities:
+
+   ```bash
+   sudo apt update && sudo apt upgrade -y
+   ```
+
+3. **Monitor and Configure Firewalls**
+
+   Consider using AWS Security Hub or a firewall like `ufw` on Ubuntu:
+
+   ```bash
+   sudo ufw enable
+   sudo ufw allow 'Nginx Full'
+   sudo ufw allow OpenSSH
+   sudo ufw status
+   ```
+
+### **5. Final Notes**
+
+- **Domain Name (Optional):** Consider using a domain name instead of the public IP for your app. You can configure a domain using Route 53 or another DNS service.
+- **SSL (Optional):** For SSL, you can use Let's Encrypt to secure your app with HTTPS.
+
+---
+
+This README provides all the necessary steps and explanations to deploy a simple React app on an AWS EC2 instance. By following this guide, your app will be up and running, accessible via the web, and configured securely.
+
+### Deleting the EC2 Instance After Use
 
 Once you are done with your project or testing, it's important to terminate the EC2 instance to avoid unnecessary charges. 
 
@@ -857,6 +977,4 @@ Once you are done with your project or testing, it's important to terminate the 
 By terminating the instance, you prevent any further billing for that instance, helping manage costs effectively.
 
 ## Conclusion
-You have successfully deployed a React and Flask application on an AWS EC2 instance! This setup allows your React frontend to interact with your Flask backend through API requests, all served from a single server instance.
-
-This `README.md` provides clear instructions on how to set up and deploy a React and Flask application on an AWS EC2 instance, covering the essential steps from server setup to running the application.
+You have successfully deployed a React and Flask application on an AWS EC2 instance! 
